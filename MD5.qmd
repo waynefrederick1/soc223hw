@@ -1,0 +1,81 @@
+---
+title: "MD5"
+author: "Wayne Frederick II"
+format: html
+embed-resources: true
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+
+exercise_data <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/visualize_data.csv")
+glimpse(exercise_data)
+```
+
+If people exercise more than they should have a lower BMI.
+
+```{r}
+cor(exercise_data$Exercise, exercise_data$BMI)
+```
+
+Shows the negative correlation between exercise and bmi
+
+```{r}
+ggplot(data = exercise_data, mapping = aes(x = Exercise, y = BMI)) + geom_point()
+```
+
+```{r}
+library(causact)
+glimpse(corruptDF)
+```
+
+```{r}
+?corruptDF
+```
+
+CPI2017: A country's CPI score shows what the country thinks about the level of public sector corruption on a scale of 0-100.
+
+HDI2017: HDI score show how well human development is going across countries
+
+## Question 3
+
+```{r}
+ggplot(data = corruptDF, mapping = aes(x = CPI2017, y = HDI2017)) + geom_point()
+```
+
+There is a positive correlation between CPI and HDI in 2017. As one increases the other does as well on average
+
+## Question 4
+
+```{r}
+ggplot(data = corruptDF, mapping = aes(x = HDI2017, y = CPI2017)) + geom_point() + geom_smooth(method = "lm")
+```
+
+## Question 5
+
+```{r}
+ggplot(data = corruptDF, mapping = aes(x = HDI2017, y = CPI2017, fill = region)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(~region)
+```
+
+I used fill to add the color and geom smooth to collect the data into one. Facet wrap allowed me to separate the data more clearly into individual graphs
+
+## Question 6
+
+```{r}
+ggplot(data = corruptDF, mapping = aes(x = HDI2017, y = CPI2017, fill = region)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(~region) + scale_x_reverse()
+```
+
+## Question 7
+
+```{r}
+ggplot(data = corruptDF, mapping = aes(x = HDI2017, y = CPI2017, fill = region)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(~region) + scale_x_reverse() + labs(title = "Relationship betweend HDI and CPI", subtitle = "Data points are countries", caption = "Source: corruptDF")
+```
+
+## Question 8
+
+```{r}
+ggplot(data = corruptDF, mapping = aes(x = HDI2017, y = CPI2017, fill = region)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(~region) + scale_x_reverse() + labs(title = "Relationship betweend HDI and CPI", subtitle = "Data points are countries", caption = "Source: corruptDF")
+
+ggsave("HDI-CDI.pdf")
+```
