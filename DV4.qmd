@@ -1,0 +1,107 @@
+---
+title: "DV4"
+author: "Wayne Frederick II"
+format: html
+embed-resources: true
+editor: visual
+---
+
+## Question 1
+
+```{r}
+library(tidyverse)
+#| message: false
+# Read in the data 
+tv_ratings <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/tv_ratings.csv")
+
+# Glimpse the data 
+glimpse(tv_ratings)
+
+```
+
+```{r}
+tv_long <- tv_ratings %>% 
+  group_by(title) %>% 
+  summarise(num_seasons = n()) %>% 
+  ungroup() %>% 
+  left_join(tv_ratings, by = "title") 
+
+tv_long <- tv_long %>% 
+  filter(num_seasons >= 5)
+```
+
+```{r}
+ggplot(data = tv_long, mapping = aes(x = av_rating, y = seasonNumber, group = titleId)) + geom_line()
+```
+
+The data is all over the place, but typically shows ratings stay in roughly the same area for all seasons.
+
+## Question 2
+
+```{r}
+ggplot(data = tv_long, mapping = aes(x = av_rating, y = seasonNumber, group = titleId)) + geom_line() +facet_wrap(~ genres )
+
+ggsave("tvdata.pdf")
+```
+
+Each genre has a similar average rating trend throughout its seasons.
+
+//What shows tend to last longer? Do ratings change much across seasons? Can you identify that show on `Drama, Family, Fantasy` whose ratings just plummeted?
+
+## Question 3
+
+```{r}
+tv_genres <- tv_ratings %>%
+  filter(av_rating >= 9) %>%
+arrange(desc(av_rating))
+tv_genres
+```
+
+```{r}
+ggplot(data = tv_genres, mapping = aes(x = genres)) + geom_bar() + coord_flip()
+```
+
+It flips the y and x-axis allowing more room for the genres to be listed.
+
+Drama has the most top rated shows.
+
+## Question 4
+
+```{r}
+comedies_dramas <- tv_ratings %>% 
+  mutate(is_comedy = if_else(str_detect(genres, "Comedy"), 
+                             1, 
+                             0)) %>% # If it contains the word comedy then 1, else 0
+  filter(is_comedy == 1 | genres == "Drama") %>% # Keep comedies and dramas
+  mutate(genres = if_else(genres == "Drama", # Make it so that we only have those two genres
+                          "Drama", 
+                          "Comedy"))
+
+glimpse(comedies_dramas)
+```
+
+```{r}
+ggplot(data = comedies_dramas, mapping = aes(x = av_rating, fill = genres)) + geom_density()  
+```
+
+This shows the distribution for both comedies and drama. Your prediction was wrong, on average comedies are rated higher.
+
+## Question 5
+
+```{r}
+ggplot(data = comedies_dramas, mapping = aes(x = av_rating, fill = genres)) + geom_histogram(color = "white") + geom_freqpoly()
+```
+
+## Question 6
+
+```{r}
+ggplot(data = comedies_dramas, mapping = aes( x = av_rating, y = share)) +geom_bin_2d()
+```
+
+Thus shows how many had higher viewership while also seeing what the average rating was.
+
+```{r}
+ggplot(data = comedies_dramas, mapping = aes( x = av_rating, y = share, fill = genres)) +geom_bin_2d()
+```
+
+There are a lot of values around 8 and the fill aesthetic provides the colors to more easily distinguish the data. Dekalog is the outlier within the data because its share is around 27 and its average rating is around 8 which accurately represents the outlier.

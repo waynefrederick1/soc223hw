@@ -1,0 +1,12 @@
+---
+title: "classwork"
+author: "w"
+format: html
+editor: visual
+---
+
+## 
+
+```{r}
+library()
+```
