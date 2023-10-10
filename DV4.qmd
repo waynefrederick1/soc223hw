@@ -98,7 +98,7 @@ ggplot(data = comedies_dramas, mapping = aes(x = av_rating, fill = genres)) + ge
 ggplot(data = comedies_dramas, mapping = aes( x = av_rating, y = share)) +geom_bin_2d()
 ```
 
-Thus shows how many had higher viewership while also seeing what the average rating was.
+This shows how many had higher viewership while also seeing what the average rating was.
 
 ```{r}
 ggplot(data = comedies_dramas, mapping = aes( x = av_rating, y = share, fill = genres)) +geom_bin_2d()
