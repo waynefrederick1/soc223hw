@@ -1,0 +1,182 @@
+---
+title: "MD05"
+author: "Wayne Frederick II"
+format: html
+embed-resources: true
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(moderndive)
+library(dplyr)
+twitch_data <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/twitchdata-update.csv")
+
+```
+
+```{r}
+library(janitor)
+twitch_data <- clean_names(twitch_data)
+
+# Inspect new names
+colnames(twitch_data)
+```
+
+## Question 1
+
+```{r}
+evals_twitchdata <- twitch_data %>%
+  select(average_viewers, followers) 
+glimpse(evals_twitchdata)
+```
+
+```{r}
+evals_twitchdata <- twitch_data %>%
+  select(average_viewers, followers)  %>%
+   sample_n(size = 5)
+view(evals_twitchdata)
+
+```
+
+Their average viewers is much less than the amount of followers they have.
+
+```{r}
+sum_twitchdata <- twitch_data %>%
+  select(average_viewers, followers) %>%
+  summary()
+view(sum_twitchdata)
+  
+```
+
+```{r}
+ggplot(data = twitch_data, mapping = aes(x = average_viewers, y = followers)) +geom_point() + theme(axis.text.x = element_text(angle = 20, size =7)) 
+options(scipen=999)
+```
+
+The more followers tends to mean there will be a higher average viewership, but it is so concentrated that its difficult to tell.
+
+```{r}
+ggplot(data = twitch_data, mapping = aes(x = average_viewers, y = followers)) +geom_point() + scale_x_log10() + scale_y_log10()+ theme(axis.text.x = element_text(angle = 20, size =7)) 
+options(scipen=999)
+ 
+```
+
+The data is much clearer now and obvious that followers and average viewers have a positive correlation.
+
+```{r}
+twitch_data <- twitch_data %>% 
+  mutate(log_viewers = log10(average_viewers), 
+         log_followers = log10(followers))
+```
+
+## Question 2
+
+```{r}
+twitchdata_model <- lm(log_viewers ~ log_followers, data = twitch_data)
+
+get_regression_table(twitchdata_model)
+```
+
+```{r}
+library(broom)
+fit1 <- twitchdata_model
+tidy(fit1)
+```
+
+```{r}
+1.1^{0.58}
+
+```
+
+A 10% increase in followers is associated with a 5.6% increase in average number of viewers
+
+## Question 3
+
+```{r}
+library(broom)
+
+pred_data <- augment(fit1)
+
+
+glimpse(pred_data)
+```
+
+```{r}
+pred_data %>% 
+  ggplot(aes(x = log_followers, y = log_viewers)) + geom_jitter(alpha = 0.4) + 
+  geom_line(aes(x = log_followers, y = .fitted), col = "orange") + 
+  theme_minimal() + labs(subtitle = "Fitted Model and Raw Data", title = "Followers & Average Viewership",  x = "log(followers)",  y = "log(viewers)")
+```
+
+I think this model describes it well because there is supposed to be a positive correlation.
+
+```{r}
+pred_data %>% 
+  ggplot(aes(x = log_followers, y = .resid)) + geom_jitter(alpha = 0.4) +
+  theme_minimal() + labs(subtitle = "Fitted Model and Raw Data", title = "Followers & Average Viewership",  x = "log(followers)",  y = "log(viewers)")
+```
+
+There are some residuals that are very big like over 1.5 and below -1, but other than that the residuals are pretty close. Residuals are the distance between each plotted points.
+
+## Question 4
+
+```{r}
+langtwitchdata <- twitch_data %>%
+  select(average_viewers, language)  %>%
+   sample_n(size = 5)
+view(langtwitchdata)
+```
+
+```{r}
+sumtwitchdata <- twitch_data %>%
+  select(average_viewers, language) %>%
+  summary()
+view(sumtwitchdata)
+```
+
+```{r}
+ggplot(data = twitch_data, mapping = aes(x = average_viewers, y = language)) + geom_point() + theme(axis.text.x = element_text(angle = 20, size =7))
+options(scipen=999)
+```
+
+The two outliers here are DOTA2Ti in both English and Russian.
+
+## Question 5
+
+```{r}
+twitch_data <- twitch_data %>% 
+  mutate(language = as.factor(language), 
+         language = relevel(language, ref = "English"))
+```
+
+```{r}
+twitchdatamodel2 <- lm(average_viewers ~ language, data = twitch_data)
+
+get_regression_table(twitchdatamodel2)
+```
+
+```{r}
+library(broom)
+fit2 <- twitchdatamodel2
+tidy(fit2)
+```
+
+There are 3 languages with higher average viewership than English and those are the ones with positive coefficients. The prediction is accurate for majority of languages.
+
+## Question 6
+
+```{r}
+library(broom)
+
+pred_data2 <- augment(fit2)
+
+
+glimpse(pred_data2)
+```
+
+```{r}
+pred_data2 %>% ggplot(aes(x = average_viewers, y = .resid)) + geom_jitter(alpha = 0.2) + geom_smooth(method = lm) + scale_x_log10() +theme_minimal() +
+labs(subtitle = "Fitted Model and Raw Data", title = "Representation of Average Viewership versus Residuals", x = "Average Number of Viewers", y = "Residuals", caption = "Source: Twitch Data")
+```
+
+DOTA2Ti is the outlier here as well.
