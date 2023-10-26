@@ -1,0 +1,140 @@
+---
+title: "MD6"
+author: "Wayne Frederick II"
+format: html
+embed-resources: true
+editor: visual
+---
+
+```{r}
+library(broom)
+library(tidyverse)
+library(moderndive)
+library(dplyr)
+library(patchwork)
+library(ggthemes)
+# Set our ggplot theme from the outset
+theme_set(theme_light())
+# Read in the data 
+gender_employment <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/gender_employment.csv")
+
+# Glimpse at the data 
+glimpse(gender_employment)
+```
+
+```{r}
+gender_employment%>% 
+  ggplot(aes(x = year, y = wage_percent_of_male)) +
+  geom_jitter(alpha = 0.1) + 
+  geom_smooth(method = "lm") + 
+  labs(title = "Women's earnings with respect to men's", 
+       y = "% of Men's Income", 
+       x = "Year")
+```
+
+## Question 1
+
+```{r}
+gender_employment <- gender_employment %>% 
+  mutate(major_category = as.factor(major_category), 
+         major_category = relevel(major_category, ref = "Management, Business, and Financial"))
+```
+
+```{r}
+parallel_model <- lm(wage_percent_of_male ~ year + major_category,
+                     data = gender_employment)
+broom::tidy(parallel_model)
+```
+
+```{r}
+-306.7184+ 0.1922*2015+3.3261  
+```
+
+Sales and Office occupations had 83.9% of male income in 2015.
+
+```{r}
+-306.7184+ 0.1922*2016+ 5.7563  
+```
+
+Service occupations had 86.5% of male income in 2015.
+
+## Question 2
+
+```{r}
+gender_employment %>% 
+  ggplot(aes(x = year, y = wage_percent_of_male)) +
+  geom_jitter(alpha = 0.1) + 
+  geom_smooth(method = "lm") + facet_wrap(~major_category)
+  labs(title = "Women's earnings with respect to men's", 
+       y = "% of Men's Income", 
+       x = "Year")
+```
+
+Their is a lot of difference in the wage percent of male across the categories so we cannot use the parallel trends assumption.
+
+## Question 3
+
+```{r}
+interactionmodel <- lm(wage_percent_of_male ~ year*major_category, data = gender_employment) 
+
+broom::tidy(interactionmodel)
+```
+
+```{r}
+-1370.4719187 + 0.7202561*2016 + 1002.8532317*1 - 0.4946783*2016*1
+```
+
+Our model shows that the Computer, Engineering, and Science jobs made 87.14% of male income in 2016.
+
+```{r}
+-1370.4719187 + 0.7202561*2016 + 2137.6501474*1 - 1.0581075*2016*1
+```
+
+The model estimates that service jobs made 86.07% of male income. The main difference is that there are more components needed to make this calculation compared to the previous model
+
+## Question 4
+
+We would choose to use a model that assumes parallel trends because it can be useful to have a baseline for the whole data set which will show the relationship well.
+
+## Question 5
+
+```{r}
+simple_fit <- lm(wage_percent_of_male ~ year,
+                 data = gender_employment)
+broom::tidy(simple_fit)
+```
+
+For every year the wage percent of male counterparts goes up by 0.2%.
+
+```{r}
+gender_employment %>% 
+  select(year, wage_percent_of_male, percent_female) %>% 
+  cor(use = "complete.obs")
+```
+
+This explains relationship between two variables that we want to examine. As the year increases the wage percent of males increases by 0.24% and the percent of workforce that is female increases by 0.005%.
+
+```{r}
+multiple_fit <- lm(wage_percent_of_male ~ year*percent_female,
+                   data = gender_employment)
+broom::tidy(multiple_fit)
+multiple_fit
+```
+
+The proportion of women who work in occupation is increasing by 10%. The relationship between year and percent_female is less than 1%.
+
+## Question 6
+
+```{r}
+simple_glanced <- broom::glance(simple_fit)
+simple_glanced$r.squared
+```
+
+r\^2 explains tells us how much the variation of a dependent variable is explained by the independent variable.
+
+```{r}
+multiple_glanced <- broom::glance(multiple_fit)
+multiple_glanced$r.squared
+```
+
+r\^2 is larger in this case so that means more of the variation of the dependent variable is relying on the independent variable hence the larger number.
