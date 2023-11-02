@@ -1,0 +1,153 @@
+---
+title: "MD06X"
+author: "Wayne Frederick II"
+format: html
+embed-resources: true
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(moderndive)
+theme_set(theme_minimal())
+```
+
+```{r}
+data(bikes, package = "bayesrules")
+glimpse(bikes)
+```
+
+## Question 0
+
+There are 500 rows in the dataset. Each row is the ridership data for one day. The dataset ranges from January 2011-December 2012. The highest number of rides in a day is 6946. The highest wind speed is 34 mph.
+
+## Question 1
+
+```{r}
+get_correlation(rides ~ temp_feel, data = bikes) 
+  round(2)
+```
+
+The correlation between \# of rides and the temperature is 0.58. When temp_feel increases by 1 standard deviation then rides will increase by 0.58 of a standard deviation.
+
+```{r}
+get_correlation(rides ~ windspeed,
+                data = bikes) %>% round(2)
+```
+
+The correlation between \# of rides and the windspeed is -0.19. When windspeed increases by 1 standard deviation the rides will decrease by 0.19 standard deviation.
+
+## Question 2
+
+```{r}
+bikes <- bikes %>% 
+  mutate(wind_kph = windspeed * 1.61)
+```
+
+```{r}
+get_correlation(windspeed ~ wind_kph,
+                data = bikes)
+```
+
+The correlation between windspeed in kph and mph is 1 because there is a unit conversion that you have to take into account. Miles are 1.61x kilometers.
+
+## Question 3
+
+```{r}
+mphmodel <- lm(rides ~ windspeed,
+                data = bikes)
+get_regression_table(mphmodel) %>% 
+  select(term, estimate)
+```
+
+```{r}
+kphmodel <- lm(rides ~ wind_kph,
+                data = bikes)
+get_regression_table(kphmodel) %>% 
+  select(term, estimate)
+```
+
+Both intercepts are the same at 4205.065. The coefficients are off by 1.61x.
+
+```{r}
+-55.523 / -34.48600
+```
+
+## Question 4
+
+```{r}
+ 4205.065-34.486*20
+```
+
+3515.345 is the predicted ridership for a 20mph wind day.
+
+```{r}
+4205.065 - 55.523*20
+```
+
+3094.605 is the predicted amount of riders on a 20kph wind day.
+
+## Question 5
+
+```{r}
+bikes <- bikes %>% 
+  mutate(temp_c = (temp_feel-32)*(5/9))
+```
+
+```{r}
+mult_model <- lm(rides ~ wind_kph + temp_c,
+                 data = bikes)
+get_regression_table(mult_model) %>% 
+  select(term, estimate)
+```
+
+Every 1°C increase in temperature there is an increase of 143 in ridership. For every 1kph increase in wind speed,there is a decrease of 20 in ridership.
+
+The intercept shows that ridership on a 0mph wind day with a temperature of 0°C would be 942.
+
+## Question 6
+
+```{r}
+pred_df <- tibble(
+  situation = 1:3,
+  temp_c = c(25, 15, 10),
+  wind_kph = c(15, 5, 40)
+)
+```
+
+For scenario 1 it is 4226 for scenario 2 it is 2992 and for scenario 3 it is 1581
+
+## Question 7
+
+```{r}
+bikes <- bikes %>% mutate(weekend = as.factor(weekend))
+weekendmodel <- lm(rides ~ wind_kph + weekend + temp_c,
+                    data = bikes)
+get_regression_table(weekendmodel) %>%
+  select(term, estimate)
+```
+
+The intercept coefficients are used in the same way. It is expected that ridership will be 714 fewer than on a weekday.
+
+## Question 8
+
+```{r}
+library(ggeffects)
+predictions <- ggpredict(weekendmodel,
+                         terms = c("weekend"),
+                         ci_level = NA)
+predictions
+```
+
+When looking at the temp and wind speed average the expected ridership a weekdays is 3683 riders and for a weekend it is 2970.
+
+## Question 9
+
+```{r}
+bikerides <- predict(weekendmodel)
+residuals <- bikes$rides - bikerides
+broom::tidy(residuals)
+residuals
+```
+
+A large residual on day 439. Had an absolute value of 3940.346. On that had hurricane sandy was about to hit in that area.
