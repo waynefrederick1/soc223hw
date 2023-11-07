@@ -1,0 +1,11 @@
+---
+title: "project-idea"
+author: "Wayne Frederick II"
+format: html
+embed-resources: true
+editor: visual
+---
+
+## Project Idea 
+
+Who is the most well rounded soccer player out of Ronaldo, Messi, and Neymar. The dataset I am using will have scores for various skills for each player. I will be able to analyze even more specific skills across the three as well, like finishing, dribbling, passing, etc. I got the dataset from kaggle.com and it is a football.csv file.
