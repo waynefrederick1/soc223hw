@@ -1,0 +1,130 @@
+---
+title: "MD7"
+author: "Wayne Frederick II"
+format: html
+embed-resources: true
+editor: visual
+---
+
+## 
+
+```{r}
+#| message: false
+library(tidyverse)
+library(here)
+library(moderndive)
+library(dplyr)
+library(ggplot2)
+theme_set(theme_minimal())
+
+nobel_winners <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/nobel_winners.csv")
+```
+
+```{r}
+nobel_winners_flt <- nobel_winners %>% 
+  filter(category != "Peace") %>% 
+  mutate(is_us = if_else(birth_country == "United States of America", 1, 0))
+```
+
+```{r}
+true_prop <- nobel_winners_flt %>% 
+  group_by(is_us) %>% 
+  summarise(prop = n()/nrow(nobel_winners_flt))
+
+ggplot() + 
+  coord_cartesian(xlim = c(0,1), ylim = c(0,1)) + 
+  geom_vline(xintercept = true_prop[2,2][[1]], linetype = "dashed")  + 
+  labs(x = "Proportion")
+```
+
+```{r}
+set.seed(33)
+# Random sample 
+our_sample <- sample_n(nobel_winners_flt, 
+                       size = 25, 
+                       replace = F)
+
+sample_prop <- our_sample %>% 
+  group_by(is_us) %>% 
+  summarise(prop = n()/nrow(our_sample))
+
+# How does our proportion look like? 
+ggplot() + 
+  coord_cartesian(xlim = c(0,1), ylim = c(0,1)) + 
+  geom_vline(xintercept = true_prop[2,2][[1]], linetype = "dashed")  + 
+  geom_vline(xintercept = sample_prop[2,2][[1]], linetype = "dotted", col = "red") +
+  labs(x = "Proportion")
+```
+
+## Question 1
+
+The population are the people that won the scientific noble prize and the sampling frame is the 25 person sample from that population. The black line is the proportion of scientific nobel prize winners that were born in the USA and the red line represents the sampled versions proportions.
+
+## Question 2
+
+```{r}
+sample1 <- nobel_winners_flt %>%
+  rep_sample_n(size=25, reps=50)
+sampleprop1 <- sample1 %>% 
+  group_by(replicate) %>% 
+  summarise(prop = sum(is_us)/25)
+ggplot() + 
+  coord_cartesian(xlim = c(0,1), ylim = c(0,1)) + 
+  geom_vline(xintercept = mean(nobel_winners_flt$is_us), linetype = "dashed")  + 
+  geom_vline(xintercept = mean(sampleprop1$prop), linetype = "dotted", col = "red") +
+  labs(x = "Proportion")
+```
+
+## Question 3
+
+```{r}
+sample2 <- nobel_winners_flt %>%
+  rep_sample_n (size=100, reps=50)
+sampleprop2 <- sample2 %>% 
+  group_by(replicate) %>% 
+  summarise(prop = sum(is_us)/100)
+ggplot() + 
+  coord_cartesian(xlim = c(0,1), ylim = c(0,1)) + 
+  geom_vline(xintercept = mean(nobel_winners_flt$is_us), linetype = "dashed")  + 
+  geom_vline(xintercept = mean(sampleprop2$prop), linetype = "dotted", col = "red") +
+  labs(x = "Proportion")
+```
+
+There is a more accurate estimate with the larger sample sized sample because the more data the more accurate.
+
+## Question 4
+
+```{r}
+sdsample_25 <- sd(sampleprop1$prop)
+
+sdsample_100 <- sd(sampleprop2$prop)
+
+sdsample_25
+sdsample_100
+```
+
+The standard deviation is smaller in the sample with 100 which shows that as the sample size increases the variability decreases.
+
+## Question 5
+
+```{r}
+nwfltgender <- nobel_winners_flt %>%
+   mutate(is_f = if_else(gender == "Female", 1, 0))
+sample3 <- nwfltgender %>%
+  rep_sample_n(size=100, reps=50)
+sampleprop3 <- sample3 %>% 
+  group_by(replicate) %>% 
+  summarise(prop = sum(is_f)/100)
+true_propg <- nwfltgender %>% 
+  group_by(is_f) %>% 
+  summarise(prop = n()/nrow(nobel_winners_flt))
+ggplot() + 
+  coord_cartesian(xlim = c(0,1), ylim = c(0,1)) + 
+  geom_vline(xintercept = true_propg[2,2][[1]], linetype = "dashed")  + 
+  geom_vline(xintercept = sampleprop3[2,2][[1]], linetype = "dotted", col = "red") +
+  labs(x = "Proportion")
+```
+
+## Question 6
+
+The Central Limit Theorem argues that the more samples you take from a population the less the data will vary and the distribution of data will be normal. This theorem allows us to make intelligent inferences based on the statistical data presented about any given population.
