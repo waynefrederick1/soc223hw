@@ -301,7 +301,7 @@ Components of the Multiple Linear Regression
 
 -   Categorical explanatory variable: POS
 
-```{r, include=FALSE}
+```{r,message=FALSE, warning=FALSE, include=FALSE}
 #| messsage: false
 lm_D <- lm(log_salary ~ total_goal_contributions, data = totalgoalcontributions, POS == "D")
   summary(lm_D)
@@ -373,7 +373,7 @@ knitr::kable(get_regression_table(lm_AM))
 
 -   **total_goal_contributions (0.01700):** For each one-unit increase in total_goal_contributions, we expect the log salary to increase by 0.01700 on average. The approximate increase in salary is \$981,458.83
 
--   **Significance:** The coefficient for total_goal_contributions is statistically significant (p-value = 0.0148), meaning that it does have a significant effect on log salary.
+-   **Significance:** The coefficient for total_goal_contributions is (p-value = 0.0148), meaning that it does have a significant effect on log salary.
 
 ## 3.3 Residual Analysis
 
