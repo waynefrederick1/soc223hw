@@ -1,0 +1,368 @@
+---
+title: "Project"
+author: "Wayne Frederick II"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyr)
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(broom)
+library(moderndive)
+library(readr)
+```
+
+## Introduction
+
+Is there a correlation between goals contributed and salary in every position?
+
+Here is a snapshot of some of the data we will be observing.
+
+```{r}
+library(readr)
+all_players <- read_csv("soc223hw/archive.3/all_players.csv")
+View(all_players)
+```
+
+```{r}
+allplayers <- all_players %>%
+  filter(Year >= 2007, Year <= 2017) %>%
+  select(Player, POS, GP, GS, MINS, G, A, SHTS, SOG, Year, Season) 
+allplayers
+```
+
+This is a snapshot of data including player salaries.
+
+```{r}
+mlssalary2017 <- mls_salaries_2017 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2017) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2016 <- mls_salaries_2016 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2016) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2015 <- mls_salaries_2015 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2015) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2014 <- mls_salaries_2014 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2014) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2013 <- mls_salaries_2013 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2013) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2012 <- mls_salaries_2012 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2012) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2011 <- mls_salaries_2011 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2011) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2010 <- mls_salaries_2010 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2010) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2009 <- mls_salaries_2009 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2009) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2008 <-mls_salaries_2008 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2008) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2007 <-mls_salaries_2007 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2007) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+
+
+salary_datasets <- list(
+  mlssalary2007, mlssalary2008, mlssalary2009,
+  mlssalary2010, mlssalary2011, mlssalary2012,
+  mlssalary2013, mlssalary2014, mlssalary2015,
+  mlssalary2016, mlssalary2017
+)
+
+mlssalaries <- bind_rows(salary_datasets)
+
+# Select the desired columns
+mlssalaries %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalaries
+```
+
+Over the years the average position salaries have increased a lot.
+
+```{r}
+allplayerdata <- allplayers %>%
+  left_join(mlssalaries, by = c("Player", "Year"))
+
+# Select the desired columns
+allplayerdata <- allplayerdata %>%
+    mutate(log_salary = log(guaranteed_compensation)) %>%
+  select(Player, POS, GP, GS, MINS, G, A, SHTS, SOG, base_salary, guaranteed_compensation, Year, Season, log_salary) 
+
+allplayerdata$POS <- gsub("D-M", "DM", allplayerdata$POS)
+allplayerdata$POS <- gsub("M-D", "DM", allplayerdata$POS)
+allplayerdata$POS <- gsub("M-F", "AM", allplayerdata$POS)
+allplayerdata$POS <- gsub("F-M", "AM", allplayerdata$POS)
+
+allplayerdata
+
+allplayerdata <- na.omit(allplayerdata)
+
+allplayerdata
+
+# View the cleaned datase
+```
+
+```{r}
+avgsalary <- allplayerdata %>%
+  group_by(POS, Year) %>%
+  summarise(AverageSalary = mean(guaranteed_compensation, na.rm = TRUE))
+avgsalary
+```
+
+```{r}
+ggplot(avgsalary, aes(x = POS, y = AverageSalary, fill = POS)) +
+  geom_bar(stat = "identity") + facet_wrap(~Year) +
+  theme_minimal() +
+  labs(x = "Position", y = "Average Salary", title = "Average Salaries by Position")
+```
+
+## 1.0
+
+```{r}
+ggplot(allplayerdata, aes(x = POS, y = guaranteed_compensation)) +
+  geom_jitter(width = 0.2) +
+  labs(x = "Position", y = "Guaranteed Comp", title = "Scatterplot of Position and Salary")
+```
+
+```{r}
+player_performance <- allplayerdata %>%
+  group_by(Player, POS, guaranteed_compensation, Year) %>%
+  summarise(
+    TotalGoals = sum(G, na.rm = TRUE),
+    TotalAssists = sum(A, na.rm = TRUE),
+    ShotsOnGoal = sum(SOG, na.rm = TRUE),
+    GamesPlayed = sum(GP, na.rm = TRUE),
+    MinutesPlayed = sum(MINS, na.rm = TRUE)
+  )
+
+top_scorers <- player_performance %>%
+  arrange(desc(TotalGoals)) %>%
+  head(10)
+
+top_assist_providers <- player_performance %>%
+  arrange(desc(TotalAssists)) %>%
+  head(10)
+
+top_shots_on_goal <- player_performance %>%
+  arrange(desc(ShotsOnGoal)) %>%
+  head(10)
+
+top_performers_list <- list(
+  TopScorers = top_scorers,
+  TopAssisters = top_assist_providers,
+  TopShotsOnGoal = top_shots_on_goal
+)
+top_performers_list
+```
+
+```{r}
+# Combine total goals and total assists to make total goal contributions
+allplayerdata$total_goal_contributions <- allplayerdata$G + allplayerdata$A
+
+# Get the top 5 players in total goal contributions along with their games played (GP)
+totalgoalcontributions <- allplayerdata %>%
+  group_by(Player, POS) %>%
+  select(POS, total_goal_contributions, GP, log_salary) %>%
+  summarise(total_goal_contributions = sum(total_goal_contributions, na.rm = TRUE),
+            GP = sum(GP, na.rm = TRUE), log_Salary = mean(log_salary, na.rm = TRUE)) %>%
+    arrange(desc(total_goal_contributions))
+
+totalgoalcontributions
+```
+
+```{r}
+ggplot(totalgoalcontributions, aes(x = POS, y = total_goal_contributions, fill = POS)) +
+  geom_bar(stat = "identity") + facet_wrap(~POS) +
+  theme_minimal() +
+  labs(x = "Position", y = "Total Goal Contributions", title = "Total Goal Contributions by Position")
+```
+
+This is interesting becuase AM is the most expensive
+
+```{r}
+lm_players <- lm(log_Salary ~  total_goal_contributions + POS, data = totalgoalcontributions)
+
+salarypred <- data.frame(
+  POS = totalgoalcontributions$POS,
+  total_goal_contributions = totalgoalcontributions$total_goal_contributions,
+  log_Salary = totalgoalcontributions$log_Salary
+)
+
+salarypred$predicted_Salary <- predict(lm_players, newdata = salarypred)
+
+summary(lm_players)
+confint(lm_players)
+get_regression_table(lm_players)
+```
+
+This shows the comopariosn to Am
+
+```{r}
+
+lm_D <- lm(log_Salary ~ total_goal_contributions, data = D_data)
+lm_DM <- lm(log_Salary ~ total_goal_contributions, data = F_data)
+lm_F <- lm(log_Salary ~ total_goal_contributions, data = F_data)
+lm_M <- lm(log_Salary ~ total_goal_contributions, data = M_data)
+lm_AM <- lm(log_Salary ~ total_goal_contributions, data = AM_data)
+
+tidy_D <- tidy(lm_D)
+tidy_DM <- tidy(lm_DM)
+tidy_F <- tidy(lm_F)
+tidy_M <- tidy(lm_M)
+tidy_AM <- tidy(lm_AM)
+
+combined_table <- bind_rows(
+  mutate(tidy_DM, Position = "D"),
+  mutate(tidy_DM, Position = "DM"),
+  mutate(tidy_F, Position = "F"),
+  mutate(tidy_M, Position = "M"), 
+  mutate(tidy_AM, Position = "AM")
+)
+
+regtable <- select(combined_table, Position, term, estimate, std.error, statistic, p.value)
+print(regtable)
+```
+
+```{r}
+ggplot(salarypred, aes(x = predicted_Salary, y = log_Salary)) +
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(x = "Predicted Salary", y = "Actual Salary", title = "Linear Regression: Predicted vs. Actual Salary")
+```
+
+```{r}
+lm_D |>
+ggplot(aes(x = log_Salary, y = .resid)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_smooth(method = "lm", color = "blue") 
+```
+
+```{r}
+lm_M |>
+ggplot(aes(x = log_Salary, y = .resid)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_smooth(method = "lm", color = "blue") 
+```
+
+```{r}
+lm_DM |>
+ggplot(aes(x = log_Salary, y = .resid)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_smooth(method = "lm", color = "blue") 
+```
+
+```{r}
+lm_AM |>
+ggplot(aes(x = log_Salary, y = .resid)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_smooth(method = "lm", color = "blue") 
+```
+
+```{r}
+lm_F |>
+ggplot(aes(x = log_Salary, y = .resid)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_smooth(method = "lm", color = "blue") 
+```
+
+```{r}
+
+allplayerdata %>%
+  filter(Year >= 2012 & Year <= 2017) %>%
+  ggplot(aes(x = POS, y = guaranteed_compensation, fill = as.factor(POS))) +
+  geom_boxplot() +
+  labs(x = "Position", y = "Actual Salary", title = "Boxplot of Actual Salary by Position (2012-2017)") 
+options(scipen=999)
+
+
+```
+
+```{r}
+playerspost_season <- all_players %>%
+  filter(Season == "post") %>%
+  group_by(Player)
+
+playerspost_season
+```
+
+```{r}
+playerspost_season$total_goal_contributions_post <- playerspost_season$G +playerspost_season$A
+
+top5contributors_post <- playerspost_season %>%
+  group_by(Player) %>%
+  summarise(total_goal_contributions_post = sum(total_goal_contributions_post, na.rm = TRUE),
+            GP = sum(GP, na.rm = TRUE)) %>%
+  arrange(desc(total_goal_contributions_post)) %>%
+  slice_head(n = 5)
+
+top5contributors_post
+
+
+# Merge the top 5 contributors with their post season apps
+#top_5_contributors_with_post <- merge(top5contributors, postseason_app, by = "Player")
+
+#top_5_contributors_with_post
+```
+
+```{r}
+# Fit the linear regression model using 'sog' (shots on target) and 'mins' (minutes played) as predictors for 'g' (goals scored).
+lm_players <- lm(TotalGoals ~  ShotsOnGoal +  MinutesPlayed + GamesPlayed, data = player_performance)
+
+# Create a new data frame for predictions
+mlspred <- data.frame(
+ ShotsOnGoal = player_performance$ShotsOnGoal,
+ MinutesPlayed = player_performance$MinutesPlayed,
+ GamesPlayed = player_performance$GamesPlayed
+ 
+)
+
+# Add predictions to the data frame
+mlspred$predicted_salary <- predict(lm_players, newdata = mlspred)
+
+summary(lm_players)
+
+# Plot the observed vs predicted goals
+
+```
+
+```{r}
+ggplot(player_performance, aes(x = ShotsOnGoal, y = TotalGoals)) +
+  geom_point(aes(color = "Observed"), alpha = 0.5) +
+  geom_point(data = mlspred, aes(x = ShotsOnGoal, y = predicted_salary, color = "Predicted"), alpha = 0.5) +
+  labs(x = "Shots on Goal", y = "Goals Scored", title = "Observed vs Predicted Goals") +
+  scale_color_manual("", breaks = c("Observed", "Predicted"), values = c("blue", "red"))
+```
+
+```{r}
+ggplot(allplayerdata, aes(x = guaranteed_compensation, y = G)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Goals", y = "Guaranteed Compensation", title = "Correlation between Goals and Salary")
+```
+
+```{r}
+ggplot(playersalaries2016, aes(x = POS, y = guaranteed_compensation)) +
+  geom_jitter(width = 0.2) +
+  labs(x = "Position", y = "Base Salary", title = "Scatterplot of Position and Salary")
+```

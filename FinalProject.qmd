@@ -1,0 +1,455 @@
+---
+title: "Project"
+author: "Wayne Frederick II"
+format: html
+embed-resources: true
+echo: false
+editor: visual
+---
+
+```{r}
+#| message: false
+library(tidyr)
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(broom)
+library(moderndive)
+library(knitr)
+```
+
+```{r}
+#| message: false
+all_players <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/all_players.csv")
+  
+mls_salaries_2007 <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/mls-salaries-2007.csv")
+  
+mls_salaries_2008 <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/mls-salaries-2008.csv")
+  
+  mls_salaries_2009 <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/mls-salaries-2009.csv")
+  
+  mls_salaries_2010 <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/mls-salaries-2010.csv")
+  
+  mls_salaries_2011 <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/mls-salaries-2011.csv")
+  
+  mls_salaries_2012 <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/mls-salaries-2012.csv")
+  
+  mls_salaries_2013 <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/mls-salaries-2013.csv")
+  
+  mls_salaries_2014 <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/mls-salaries-2014.csv")
+  
+  mls_salaries_2015 <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/mls-salaries-2015.csv")
+  
+  mls_salaries_2016 <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/mls-salaries-2016.csv")
+    
+  mls_salaries_2017 <- read_csv("/Users/waynefrederickii/Desktop/Data Analytics/soc223hw/mls-salaries-2017.csv")
+```
+
+## 1. Introduction
+
+Now that Lionel Messi has joined the league and soccer is becoming more popular in the US, hence the 2026 World Cup, the MLS is rapidly growing. The salaries in the MLS compared to bigger leagues in Europe are vastly different considering it is the top league in the country, but the gap is slowly closing. I wanted to look into the different salaries in the MLS, how they vary by position and if factors such as goal contributions, games played, and minutes played had a serious affect on how the players were paid in every position. Is there a correlation between goals contributed and salary in every position? People tend to only look at goals and assists when measuring success and the other smaller defensive work goes unnoticed most of the time. Seeing how the salary is affected by goals and assists will give another perspective on how successful a player is based on their earnings and how it changes over time.
+
+```{r}
+#| messsage: false
+allplayers <- all_players %>%
+  filter(Year >= 2007, Year <= 2017) %>%
+  select(Player, POS, GP, GS, MINS, G, A, SHTS, SOG, Year, Season) 
+```
+
+This is a snapshot of data including player salaries from 2007-2017.
+
+```{r}
+#| messsage: false
+mlssalary2017 <- mls_salaries_2017 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2017) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2016 <- mls_salaries_2016 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2016) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2015 <- mls_salaries_2015 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2015) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2014 <- mls_salaries_2014 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2014) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2013 <- mls_salaries_2013 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2013) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2012 <- mls_salaries_2012 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2012) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2011 <- mls_salaries_2011 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2011) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2010 <- mls_salaries_2010 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2010) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2009 <- mls_salaries_2009 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2009) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2008 <-mls_salaries_2008 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2008) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+mlssalary2007 <-mls_salaries_2007 %>%
+  mutate(Player = paste(first_name, last_name)) %>%
+  mutate(Year = 2007) %>%
+  select(Player, base_salary, guaranteed_compensation, Year)
+
+
+salary_datasets <- list(
+  mlssalary2007, mlssalary2008, mlssalary2009,
+  mlssalary2010, mlssalary2011, mlssalary2012,
+  mlssalary2013, mlssalary2014, mlssalary2015,
+  mlssalary2016, mlssalary2017
+)
+```
+
+```{r, echo=FALSE, message=FALSE}
+#| messsage: false
+mlssalaries <- bind_rows(salary_datasets)
+mlssalaries <- mlssalaries %>%
+select(Player, base_salary, guaranteed_compensation, Year)
+```
+
+## 2. Exploratory Data Analysis
+
+Over the years the average salaries per position have increased a lot. This data looks at players who have played more than 15 games through the years 2007-2017.
+
+log_salary helps create better distribution of the player salaries the conversion: salary = elog_salary
+
+```{r, include=FALSE}
+#| messsage: false
+allplayerdata <- allplayers %>%
+  left_join(mlssalaries, by = c("Player", "Year"))
+
+# Select the desired columns
+allplayerdata <- allplayerdata %>%
+    mutate(log_salary = log(guaranteed_compensation)) %>%
+  select(Player, POS, GP, GS, MINS, G, A, SHTS, SOG, log_salary, Year)
+
+allplayerdata$POS <- gsub("D-M", "DM", allplayerdata$POS)
+allplayerdata$POS <- gsub("M-D", "DM", allplayerdata$POS)
+allplayerdata$POS <- gsub("M-F", "AM", allplayerdata$POS)
+allplayerdata$POS <- gsub("F-M", "AM", allplayerdata$POS)
+
+allplayerdata <- na.omit(allplayerdata)
+
+allplayerdata <- allplayerdata %>%
+  filter(GP >= 15)
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#| messsage: false
+knitr::kable(head(allplayerdata))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#| messsage: false
+avgsalary <- allplayerdata %>%
+  group_by(POS, Year) %>%
+  summarise(AverageSalary = mean(log_salary, na.rm = TRUE))
+summary(avgsalary)
+```
+
+```{r}
+ggplot(avgsalary, mapping = aes(x = Year, y = AverageSalary)) + geom_line() + facet_wrap(~POS) + theme(axis.text.x = element_text(angle = 20, size =7))
+```
+
+In Figure 1, we can see that the value of attacking midfielders has had the most drastic changes out of all the positions while Midfielders, defenders, and forwards have stayed the most consistent. The mean average salary was 11.87 and ranged from 11.04 to 13.05.
+
+```{r, message=FALSE, warning=FALSE}
+ggplot(allplayerdata, aes(x = log_salary)) +
+  geom_histogram(fill = "blue", color = "white") + facet_wrap(~POS) +
+  labs(x = "log_salary", y = "Count", title = "Distribution of Salaries by Position")
+
+```
+
+In Figure 2, we created a histogram that shows the distribution of salaries across the MLS per position.
+
+```{r}
+#| messsage: false
+avgmin <- allplayerdata %>%
+  group_by(POS, Year) %>%
+  summarise(AverageMin = mean(MINS, na.rm = TRUE)) %>%
+arrange(desc(AverageMin))
+
+```
+
+```{r}
+ggplot(avgmin, aes(x = POS, y = AverageMin, fill = POS)) +
+  geom_bar(stat = "identity") + facet_wrap(~Year) +
+  theme_minimal() +
+  labs(x = "Position", y = "Average Min", title = "Average Minutes by Position")
+```
+
+In figure 3, we can see that the average min for different positions has changed a lot over the years. I thought this data was useful to visualize because you can see which positions play the most and then compare that to their respective salaries.
+
+```{r}
+ggplot(allplayerdata, aes(x = POS, y = log_salary, fill = "POS")) +
+  geom_boxplot() +
+  geom_jitter(width = 0.2) +
+  labs(x = "Position", y = "log_salary", title = "Scatterplot of Position and Salary")
+```
+
+```{r, message=FALSE, warning=FALSE}
+#| messsage: false
+player_performance <- allplayerdata %>%
+  group_by(Player, POS, log_salary, Year) %>%
+  summarise(
+    TotalGoals = sum(G, na.rm = TRUE),
+    TotalAssists = sum(A, na.rm = TRUE),
+    ShotsOnGoal = sum(SOG, na.rm = TRUE),
+    GamesPlayed = sum(GP, na.rm = TRUE),
+    MinutesPlayed = sum(MINS, na.rm = TRUE)
+  )
+top_scorers <- player_performance %>%
+  arrange(desc(TotalGoals)) %>%
+  head(10)
+
+top_assist_providers <- player_performance %>%
+  arrange(desc(TotalAssists)) %>%
+  head(10)
+
+top_shots_on_goal <- player_performance %>%
+  arrange(desc(ShotsOnGoal)) %>%
+  head(10)
+
+top_performers_list <- list(
+  TopScorers = top_scorers,
+  TopAssisters = top_assist_providers,
+  TopShotsOnGoal = top_shots_on_goal
+)
+```
+
+```{r, , message=FALSE, warning=FALSE}
+#| messsage: false
+allplayerdata$total_goal_contributions <- allplayerdata$G + allplayerdata$A
+
+totalgoalcontributions <- allplayerdata %>%
+  group_by(Player, POS) %>%
+  select(POS, total_goal_contributions, GP, log_salary) %>%
+  summarise(total_goal_contributions = sum(total_goal_contributions, na.rm = TRUE),
+            GP = sum(GP, na.rm = TRUE), log_salary = mean(log_salary, na.rm = TRUE)) %>%
+    arrange(desc(total_goal_contributions))
+```
+
+This shows the top 10 goal contributors inn each category and how many total goal contributions they have combined
+
+```{r, message=FALSE, warning=FALSE}
+#| messsage: false
+nototalgoalcontributions <- totalgoalcontributions %>%
+  group_by(POS) %>%
+  arrange(desc(total_goal_contributions)) %>%
+  slice_head(n = 10) %>%
+  summarise(total_goal_contributions = sum(total_goal_contributions, na.rm = TRUE))
+
+```
+
+```{r, message=FALSE, warning=FALSE}
+ggplot(nototalgoalcontributions, aes(x = POS, y = total_goal_contributions, fill = POS)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(x = "Position", y = "Total Goal Contributions", title = "Top 10 Total Goal Contrbutions by Position")
+```
+
+This is interesting because AM is the most valued player salary wise yet the top 10 Forwards and Midfielders have contributed to significantly more goals.
+
+```{r, include=FALSE}
+#| messsage: false
+lm_players <- lm(log_salary ~  total_goal_contributions + POS, data = totalgoalcontributions)
+
+salarypred <- data.frame(
+  POS = totalgoalcontributions$POS,
+  total_goal_contributions = totalgoalcontributions$total_goal_contributions,
+  log_salary = totalgoalcontributions$log_salary
+)
+
+salarypred$predicted_Salary <- predict(lm_players, newdata = salarypred)
+
+summary(lm_players)
+confint(lm_players)
+get_regression_table(lm_players)
+```
+
+```{r}
+ggplot(salarypred, aes(x = predicted_Salary, y = log_salary)) +
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(x = "Predicted Salary", y = "Actual Salary", title = "Linear Regression: Predicted vs. Actual Salary")
+```
+
+## 3. Multiple Linear Regression
+
+## 3.1 Regression 
+
+Components of the Multiple Linear Regression
+
+-   Outcome variable: y = log salary
+
+-   Numerical explanatory variables: x = total_goal_contrbutions
+
+-   Categorical explanatory variable: POS
+
+```{r, include=FALSE}
+#| messsage: false
+lm_D <- lm(log_salary ~ total_goal_contributions, data = totalgoalcontributions, POS == "D")
+  summary(lm_D)
+  confint(lm_D)
+
+lm_DM <- lm(log_salary ~ total_goal_contributions, data = totalgoalcontributions, POS == "DM")
+summary(lm_DM)
+confint(lm_DM)
+
+lm_F <- lm(log_salary ~ total_goal_contributions, data = totalgoalcontributions, POS == "F")
+summary(lm_F)
+confint(lm_F)
+
+lm_M <- lm(log_salary ~ total_goal_contributions, data = totalgoalcontributions, POS == "M")
+summary(lm_M)
+confint(lm_M)
+
+lm_AM <- lm(log_salary ~ total_goal_contributions, data = totalgoalcontributions, POS == "AM")
+summary(lm_AM)
+confint(lm_AM)
+```
+
+## 3.2 Model Results
+
+```{r}
+#| messsage: false
+knitr::kable(get_regression_table(lm_D))
+knitr::kable(get_regression_table(lm_DM))
+knitr::kable(get_regression_table(lm_F))
+knitr::kable(get_regression_table(lm_M))
+knitr::kable(get_regression_table(lm_AM))
+```
+
+**D (Defense)**
+
+-   **Intercept (11.50):** The expected log salary for the reference position (D) when total_goal_contributions is zero.
+
+-   **total_goal_contributions (0.01319):** For each one-unit increase in total_goal_contributions, we expect the log salary to increase by 0.01319 on average. The approximate increase in salary is \$163,180.29
+
+-   **Significance:** The coefficient for total_goal_contributions is (p-value = 0.00514), meaning that it does have a significant effect on log salary.
+
+**DM (Defensive Midfield)**
+
+-   **Intercept (11.39):** The expected log salary for the reference position (DM) when total_goal_contributions is zero.
+
+-   **total_goal_contributions (0.01062):** For each one-unit increase in total_goal_contributions, we expect the log salary to increase by 0.01062 on average. The approximate increase in salary is \$76,266.28.
+
+-   **Significance:** The coefficient for total_goal_contributions is not (p-value = 0.248), meaning that it does not have a significant effect on log salary.
+
+**F (Forward)**
+
+-   **Intercept (11.72):** The expected log salary for the reference position (F) when total_goal_contributions is zero.
+
+-   **total_goal_contributions (0.01515):** For each one-unit increase in total_goal_contributions, we expect the log salary to increase by 0.01515 on average. The approximate increase in salary is \$1,611,854.97.
+
+-   **Significance:** The coefficient for total_goal_contributions is (p-value = 0.0000000175). , meaning that it does have a significant effect on log salary.
+
+**M (Midfield)**
+
+-   **Intercept (11.82):** The expected log salary for the reference position (M) when total_goal_contributions is zero.
+
+-   **total_goal_contributions (0.00843):** For each one-unit increase in total_goal_contributions, we expect the log salary to increase by 0.00843 on average. The approximate increase in salary is \$346,811.80.
+
+-   **Significance:** The coefficient for total_goal_contributions is (p-value = 0.000992), meaning that it does have a significant effect on log salary.
+
+**AM (Attacking Midfield)**
+
+-   **Intercept (11.66):** The expected log salary for the reference position (AM) when total_goal_contributions is zero.
+
+-   **total_goal_contributions (0.01700):** For each one-unit increase in total_goal_contributions, we expect the log salary to increase by 0.01700 on average. The approximate increase in salary is \$981,458.83
+
+-   **Significance:** The coefficient for total_goal_contributions is statistically significant (p-value = 0.0148), meaning that it does have a significant effect on log salary.
+
+## 3.3 Residual Analysis
+
+```{r, message=FALSE, warning=FALSE}
+#| messsage: false
+lm_D |>
+ggplot(aes(x = log_salary, y = .resid)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_smooth(method = "lm", color = "blue") 
+```
+
+-   
+
+-   The blue trend line is relatively flat, suggesting that the model captures the relationship between total goal contributions and the salary adequately.
+
+```{r, message=FALSE, warning=FALSE}
+#| messsage: false
+lm_M |>
+ggplot(aes(x = log_salary, y = .resid)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_smooth(method = "lm", color = "blue") 
+```
+
+-   
+
+-   The trend line is relatively flat, suggesting a reasonable fit of the model to the data.
+
+```{r, message=FALSE, warning=FALSE}
+#| messsage: false
+lm_DM |>
+ggplot(aes(x = log_salary, y = .resid)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_smooth(method = "lm", color = "blue") 
+```
+
+-   This suggests that the model might not capture all the variability in the data, and there could be other factors influencing the relationship between total goal contributions and the salary.
+
+```{r, message=FALSE, warning=FALSE}
+#| messsage: false
+lm_AM |>
+ggplot(aes(x = log_salary, y = .resid)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_smooth(method = "lm", color = "blue") 
+```
+
+-   This also suggests that the model might benefit from more explanatory variable to improve its predictive performance.
+
+```{r, message=FALSE, warning=FALSE}
+#| messsage: false
+lm_F |>
+ggplot(aes(x = log_salary, y = .resid)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_smooth(method = "lm", color = "blue") 
+```
+
+-   The trend line is relatively flat, suggesting that the model adequately captures the relationship between total goal contributions and log salaries.
+
+## 3.4 Interpreting Confidence Intervals
+
+\
+The regression analyses reveals that, for defenders and forwards, increased total goal contributions correspond to higher log salaries, implying a positive impact on earnings. However, for Defensive Midfield (DM), Midfield (M), and Attacking Midfield (AM) positions, the relationship between total goal contributions and log salaries is not statistically significant.
+
+## 4 Discussions
+
+## 4.1 Conclusions
+
+The MLS player data used reveals interesting insights into the relationship between goal contributions and player salaries across various positions. The positions are showing different patterns when looking at how salary is affected by total goal contributions. Forwards experience the most increase in salary while defensive midfielders show a much less significant increase. The true impact on salary is clear. Goal contributions do have a serious impact as seen with attacking midfielders. An estimated salary increase of almost \$1 Million was estimated which could also show that it is a harder and more rare position for people to succeed in.
+
+## 4.2 Limitations
+
+This data doesn't account for age, nationality, or team which could have an affect on the findings in this project. This dataset is also only MLS and from 2007-2017. There are a lot of players considered midfielders, forwards, and defenders while only some are defensive or attacking midfielders.
+
+## 4.3 More Questions
+
+I would like to know what other statistics can help determine what really increases salaries. The MLS is growing rapidly so the recent events would be great to look at to see how the league has grown over the last 6 years.
+
+## 5 Citations and References
+
+\"U.S. Major League Soccer Salaries.\" Kaggle, https://www.kaggle.com/datasets/crawford/us-major-league-soccer-salaries
